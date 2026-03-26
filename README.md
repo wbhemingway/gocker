@@ -1,5 +1,5 @@
 # Gocker
-**Gocker** is a minimalist, straightforward time and pay tracker built in Go. Designed specifically for freelance contract work, built to help accurately record time spent to bill.
+**Gocker** is a minimalist, straightforward time and pay tracker built in Go. Designed specifically for freelance contract work; built to help accurately record time spent to bill.
 
 ## Key Features
 * **Session Management:** Start and stop work sessions from the CLI with single-word commands or through the GUI.
