@@ -19,7 +19,7 @@
 ## Project Roadmap
 
 ### Phase 1: The CLI Foundation
-- [O] Initialize project scaffolding (Standard Go Layout).
+- [x] Initialize project scaffolding (Standard Go Layout).
 - [ ] Define SQLite schema for `sessions` and `breaks`.
 - [ ] Implement the `internal/engine` interface.
 - [ ] Basic Cobra commands: `gocker start`, `gocker stop`, `gocker status`.
