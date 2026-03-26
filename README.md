@@ -18,21 +18,27 @@
 
 ## Project Roadmap
 
-### Phase 1: The CLI Foundation
-- [x] Initialize project scaffolding (Standard Go Layout).
-- [ ] Define SQLite schema for `sessions` and `breaks`.
+### Phase 1: The CLI & Internal Logic
+- [x] Initialize project scaffolding.
+- [ ] Define SQLite schema for `sessions`, `tags` and `breaks`.
 - [ ] Implement the `internal/engine` interface.
 - [ ] Basic Cobra commands: `gocker start`, `gocker stop`, `gocker status`.
 
 ### Phase 2: Finance & Reporting
 - [ ] Implement the `finance` package.
 - [ ] Add `gocker report` command to show daily/weekly earnings.
+- [ ] Status Command: A "Live" dashboard in the terminal showing current session duration, active tags, and real-time earnings.
 - [ ] Implement CSV export logic for pay period cross-referencing.
 - [ ] Add `gocker edit` to manually adjust timestamps.
 
-### Phase 3: The Native GUI (Windows)
-- [ ] Transition to a native Windows GUI.
+### Phase 3: The Native GUI
+- [ ] Implement Fyne for a consistent native UI across Windows, Mac, and Linux.
 - [ ] Implement a "Live Timer" dashboard.
+- [ ] Implement a table-based manager interface to easily edit timestamps, adjust hourly rates, or re-tag previous sessions.
 
 ### Phase 4: Polish & Quality of Life
-**TBD**
+- [ ] Cross-Platform Paths: Implement os.UserConfigDir to ensure the .db file is stored correctly on Windows, Linux, and macOS.
+- [ ] Implement a --back or --offset flag for the CLI to account for forgotten start times.
+- [ ] Add a rounding toggle for "Billable" vs. "Actual" time
+- [ ] Add Automated backup logic to automatically mirror the gocker.db to a backup directory on session completion.
+- [ ] Add theme support for light and dark
