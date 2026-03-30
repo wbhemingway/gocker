@@ -20,9 +20,9 @@
 
 ### Phase 1: The CLI & Internal Logic
 - [x] Initialize project scaffolding.
-- [ ] Define SQLite schema for `sessions`, `tags` and `breaks`.
+- [x] Define SQLite schema for `sessions`, `tags` and `entry_tags`.
 - [ ] Implement the `internal/engine` interface.
-- [ ] Basic Cobra commands: `gocker start`, `gocker stop`, `gocker status`.
+- [ ] Impliment basic Cobra commands `gocker start`, `gocker stop`, `gocker status`.
 
 ### Phase 2: Finance & Reporting
 - [ ] Implement the `finance` package.
