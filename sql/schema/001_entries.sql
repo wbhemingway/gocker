@@ -6,6 +6,7 @@ CREATE TABLE entries (
     start_time DATETIME NOT NULL,
     end_time DATETIME,
     status TEXT NOT NULL DEFAULT 'active',
+    breaks_json TEXT DEFAULT '[]',
     note TEXT
 );
 
