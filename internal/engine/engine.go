@@ -20,6 +20,13 @@ type Break struct {
 	End   *time.Time `json:"end,omitempty"`
 }
 
+type TaskStatus struct {
+	TaskName      string
+	IsOnBreak     bool
+	TotalDuration time.Duration
+	PaidDuration  time.Duration
+}
+
 func NewEngine(queries *db.Queries) *Engine {
 	return &Engine{queries: queries}
 }
@@ -125,4 +132,42 @@ func (e *Engine) ToggleBreak() error {
 	}
 
 	return nil
+}
+
+func (e *Engine) GetStatus() (*TaskStatus, error) {
+	curTask, err := e.queries.GetActiveEntry(context.Background())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("no active task to get a status for")
+		}
+		return nil, fmt.Errorf("database error: %w", err)
+	}
+
+	var breaks []Break
+	err = json.Unmarshal([]byte(curTask.BreaksJson), &breaks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse breaks: %w", err)
+	}
+
+	totalDuration := time.Since(curTask.StartTime)
+	var breakDuration time.Duration
+	isOnBreak := false
+
+	for i, b := range breaks {
+		if b.End != nil {
+			breakDuration += b.End.Sub(b.Start)
+		} else if i == len(breaks)-1 {
+			isOnBreak = true
+			breakDuration += time.Since(b.Start)
+		}
+	}
+
+	paidDuration := totalDuration - breakDuration
+
+	return &TaskStatus{
+		TaskName:      curTask.TaskName,
+		IsOnBreak:     isOnBreak,
+		TotalDuration: totalDuration,
+		PaidDuration:  paidDuration,
+	}, nil
 }
