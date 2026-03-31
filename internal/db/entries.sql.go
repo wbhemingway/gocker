@@ -17,8 +17,8 @@ SET status = 'cancelled'
 WHERE id = ?
 `
 
-func (q *Queries) CancelEntry(ctx context.Context, db DBTX, id int64) error {
-	_, err := db.ExecContext(ctx, cancelEntry, id)
+func (q *Queries) CancelEntry(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, cancelEntry, id)
 	return err
 }
 
@@ -36,12 +36,12 @@ RETURNING id, task_name, hourly_rate, start_time, end_time, status, breaks_json,
 
 type CreateEntryParams struct {
 	TaskName   string    `json:"task_name"`
-	HourlyRate float64   `json:"hourly_rate"`
+	HourlyRate int64     `json:"hourly_rate"`
 	StartTime  time.Time `json:"start_time"`
 }
 
-func (q *Queries) CreateEntry(ctx context.Context, db DBTX, arg CreateEntryParams) (Entry, error) {
-	row := db.QueryRowContext(ctx, createEntry, arg.TaskName, arg.HourlyRate, arg.StartTime)
+func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error) {
+	row := q.db.QueryRowContext(ctx, createEntry, arg.TaskName, arg.HourlyRate, arg.StartTime)
 	var i Entry
 	err := row.Scan(
 		&i.ID,
@@ -70,8 +70,8 @@ type EndEntryParams struct {
 	ID      int64        `json:"id"`
 }
 
-func (q *Queries) EndEntry(ctx context.Context, db DBTX, arg EndEntryParams) (Entry, error) {
-	row := db.QueryRowContext(ctx, endEntry, arg.EndTime, arg.ID)
+func (q *Queries) EndEntry(ctx context.Context, arg EndEntryParams) (Entry, error) {
+	row := q.db.QueryRowContext(ctx, endEntry, arg.EndTime, arg.ID)
 	var i Entry
 	err := row.Scan(
 		&i.ID,
@@ -92,8 +92,8 @@ WHERE status = 'active'
 LIMIT 1
 `
 
-func (q *Queries) GetActiveEntry(ctx context.Context, db DBTX) (Entry, error) {
-	row := db.QueryRowContext(ctx, getActiveEntry)
+func (q *Queries) GetActiveEntry(ctx context.Context) (Entry, error) {
+	row := q.db.QueryRowContext(ctx, getActiveEntry)
 	var i Entry
 	err := row.Scan(
 		&i.ID,
@@ -114,8 +114,8 @@ ORDER BY start_time DESC
 LIMIT ?
 `
 
-func (q *Queries) ListRecentEntries(ctx context.Context, db DBTX, limit int64) ([]Entry, error) {
-	rows, err := db.QueryContext(ctx, listRecentEntries, limit)
+func (q *Queries) ListRecentEntries(ctx context.Context, limit int64) ([]Entry, error) {
+	rows, err := q.db.QueryContext(ctx, listRecentEntries, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -153,11 +153,11 @@ WHERE id = ?
 `
 
 type UpdateEntryBreaksParams struct {
-	BreaksJson sql.NullString `json:"breaks_json"`
-	ID         int64          `json:"id"`
+	BreaksJson string `json:"breaks_json"`
+	ID         int64  `json:"id"`
 }
 
-func (q *Queries) UpdateEntryBreaks(ctx context.Context, db DBTX, arg UpdateEntryBreaksParams) error {
-	_, err := db.ExecContext(ctx, updateEntryBreaks, arg.BreaksJson, arg.ID)
+func (q *Queries) UpdateEntryBreaks(ctx context.Context, arg UpdateEntryBreaksParams) error {
+	_, err := q.db.ExecContext(ctx, updateEntryBreaks, arg.BreaksJson, arg.ID)
 	return err
 }

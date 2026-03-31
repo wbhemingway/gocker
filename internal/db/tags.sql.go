@@ -16,8 +16,8 @@ ON CONFLICT(name) DO UPDATE SET name=excluded.name
 RETURNING id, name
 `
 
-func (q *Queries) CreateTag(ctx context.Context, db DBTX, name string) (Tag, error) {
-	row := db.QueryRowContext(ctx, createTag, name)
+func (q *Queries) CreateTag(ctx context.Context, name string) (Tag, error) {
+	row := q.db.QueryRowContext(ctx, createTag, name)
 	var i Tag
 	err := row.Scan(&i.ID, &i.Name)
 	return i, err
@@ -29,8 +29,8 @@ JOIN entry_tags et ON t.id = et.tag_id
 WHERE et.entry_id = ?
 `
 
-func (q *Queries) GetTagsForEntry(ctx context.Context, db DBTX, entryID int64) ([]Tag, error) {
-	rows, err := db.QueryContext(ctx, getTagsForEntry, entryID)
+func (q *Queries) GetTagsForEntry(ctx context.Context, entryID int64) ([]Tag, error) {
+	rows, err := q.db.QueryContext(ctx, getTagsForEntry, entryID)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +62,8 @@ type LinkTagToEntryParams struct {
 	TagID   int64 `json:"tag_id"`
 }
 
-func (q *Queries) LinkTagToEntry(ctx context.Context, db DBTX, arg LinkTagToEntryParams) error {
-	_, err := db.ExecContext(ctx, linkTagToEntry, arg.EntryID, arg.TagID)
+func (q *Queries) LinkTagToEntry(ctx context.Context, arg LinkTagToEntryParams) error {
+	_, err := q.db.ExecContext(ctx, linkTagToEntry, arg.EntryID, arg.TagID)
 	return err
 }
 
@@ -71,8 +71,8 @@ const listAllTags = `-- name: ListAllTags :many
 SELECT id, name FROM tags ORDER BY name ASC
 `
 
-func (q *Queries) ListAllTags(ctx context.Context, db DBTX) ([]Tag, error) {
-	rows, err := db.QueryContext(ctx, listAllTags)
+func (q *Queries) ListAllTags(ctx context.Context) ([]Tag, error) {
+	rows, err := q.db.QueryContext(ctx, listAllTags)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +104,7 @@ type UnlinkTagFromEntryParams struct {
 	TagID   int64 `json:"tag_id"`
 }
 
-func (q *Queries) UnlinkTagFromEntry(ctx context.Context, db DBTX, arg UnlinkTagFromEntryParams) error {
-	_, err := db.ExecContext(ctx, unlinkTagFromEntry, arg.EntryID, arg.TagID)
+func (q *Queries) UnlinkTagFromEntry(ctx context.Context, arg UnlinkTagFromEntryParams) error {
+	_, err := q.db.ExecContext(ctx, unlinkTagFromEntry, arg.EntryID, arg.TagID)
 	return err
 }

@@ -9,17 +9,17 @@ import (
 )
 
 type Querier interface {
-	CancelEntry(ctx context.Context, db DBTX, id int64) error
-	CreateEntry(ctx context.Context, db DBTX, arg CreateEntryParams) (Entry, error)
-	CreateTag(ctx context.Context, db DBTX, name string) (Tag, error)
-	EndEntry(ctx context.Context, db DBTX, arg EndEntryParams) (Entry, error)
-	GetActiveEntry(ctx context.Context, db DBTX) (Entry, error)
-	GetTagsForEntry(ctx context.Context, db DBTX, entryID int64) ([]Tag, error)
-	LinkTagToEntry(ctx context.Context, db DBTX, arg LinkTagToEntryParams) error
-	ListAllTags(ctx context.Context, db DBTX) ([]Tag, error)
-	ListRecentEntries(ctx context.Context, db DBTX, limit int64) ([]Entry, error)
-	UnlinkTagFromEntry(ctx context.Context, db DBTX, arg UnlinkTagFromEntryParams) error
-	UpdateEntryBreaks(ctx context.Context, db DBTX, arg UpdateEntryBreaksParams) error
+	CancelEntry(ctx context.Context, id int64) error
+	CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error)
+	CreateTag(ctx context.Context, name string) (Tag, error)
+	EndEntry(ctx context.Context, arg EndEntryParams) (Entry, error)
+	GetActiveEntry(ctx context.Context) (Entry, error)
+	GetTagsForEntry(ctx context.Context, entryID int64) ([]Tag, error)
+	LinkTagToEntry(ctx context.Context, arg LinkTagToEntryParams) error
+	ListAllTags(ctx context.Context) ([]Tag, error)
+	ListRecentEntries(ctx context.Context, limit int64) ([]Entry, error)
+	UnlinkTagFromEntry(ctx context.Context, arg UnlinkTagFromEntryParams) error
+	UpdateEntryBreaks(ctx context.Context, arg UpdateEntryBreaksParams) error
 }
 
 var _ Querier = (*Queries)(nil)

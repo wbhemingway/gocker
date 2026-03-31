@@ -12,11 +12,11 @@ import (
 type Entry struct {
 	ID         int64          `json:"id"`
 	TaskName   string         `json:"task_name"`
-	HourlyRate float64        `json:"hourly_rate"`
+	HourlyRate int64          `json:"hourly_rate"`
 	StartTime  time.Time      `json:"start_time"`
 	EndTime    sql.NullTime   `json:"end_time"`
 	Status     string         `json:"status"`
-	BreaksJson sql.NullString `json:"breaks_json"`
+	BreaksJson string         `json:"breaks_json"`
 	Note       sql.NullString `json:"note"`
 }
 
