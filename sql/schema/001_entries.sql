@@ -7,7 +7,7 @@ CREATE TABLE entries (
     end_time DATETIME,
     status TEXT NOT NULL DEFAULT 'active',
     breaks_json TEXT NOT NULL DEFAULT '[]',
-    note TEXT
+    note TEXT NOT NULL DEFAULT ''
 );
 
 -- +goose Down

@@ -27,9 +27,10 @@ INSERT INTO entries (
 task_name,
 hourly_rate,
 start_time,
+note,
 status
 ) VALUES (
- ?, ?, ?, 'active'
+ ?, ?, ?, ?, 'active'
  )
 RETURNING id, task_name, hourly_rate, start_time, end_time, status, breaks_json, note
 `
@@ -38,10 +39,16 @@ type CreateEntryParams struct {
 	TaskName   string    `json:"task_name"`
 	HourlyRate int64     `json:"hourly_rate"`
 	StartTime  time.Time `json:"start_time"`
+	Note       string    `json:"note"`
 }
 
 func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error) {
-	row := q.db.QueryRowContext(ctx, createEntry, arg.TaskName, arg.HourlyRate, arg.StartTime)
+	row := q.db.QueryRowContext(ctx, createEntry,
+		arg.TaskName,
+		arg.HourlyRate,
+		arg.StartTime,
+		arg.Note,
+	)
 	var i Entry
 	err := row.Scan(
 		&i.ID,

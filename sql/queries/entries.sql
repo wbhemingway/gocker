@@ -3,9 +3,10 @@ INSERT INTO entries (
 task_name,
 hourly_rate,
 start_time,
+note,
 status
 ) VALUES (
- ?, ?, ?, 'active'
+ ?, ?, ?, ?, 'active'
  )
 RETURNING *;
 

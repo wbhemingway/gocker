@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/wbhemingway/gocker/internal/db"
+	"github.com/wbhemingway/gocker/internal/models"
 )
 
 type Engine struct {
@@ -20,18 +21,11 @@ type Break struct {
 	End   *time.Time `json:"end,omitempty"`
 }
 
-type TaskStatus struct {
-	TaskName      string
-	IsOnBreak     bool
-	TotalDuration time.Duration
-	PaidDuration  time.Duration
-}
-
 func NewEngine(queries *db.Queries) *Engine {
 	return &Engine{queries: queries}
 }
 
-func (e *Engine) StartTask(name string, rate int64) error {
+func (e *Engine) StartTask(name string, rate int64, note string) error {
 
 	_, err := e.queries.GetActiveEntry(context.Background())
 	if err == nil {
@@ -45,6 +39,7 @@ func (e *Engine) StartTask(name string, rate int64) error {
 	args := db.CreateEntryParams{
 		TaskName:   name,
 		HourlyRate: rate,
+		Note:       note,
 		StartTime:  time.Now(),
 	}
 
@@ -134,7 +129,7 @@ func (e *Engine) ToggleBreak() error {
 	return nil
 }
 
-func (e *Engine) GetStatus() (*TaskStatus, error) {
+func (e *Engine) GetStatus() (*models.TaskStatus, error) {
 	curTask, err := e.queries.GetActiveEntry(context.Background())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -164,7 +159,7 @@ func (e *Engine) GetStatus() (*TaskStatus, error) {
 
 	paidDuration := totalDuration - breakDuration
 
-	return &TaskStatus{
+	return &models.TaskStatus{
 		TaskName:      curTask.TaskName,
 		IsOnBreak:     isOnBreak,
 		TotalDuration: totalDuration,
