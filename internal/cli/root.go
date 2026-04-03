@@ -12,7 +12,7 @@ import (
 )
 
 type TimeTracker interface {
-	StartTask(name string, rate int64, note string) error
+	StartTask(name string, rate int64, note string, tags []string) error
 	StopTask() error
 	CancelTask() error
 	ToggleBreak() error

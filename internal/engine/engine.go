@@ -25,7 +25,7 @@ func NewEngine(queries *db.Queries) *Engine {
 	return &Engine{queries: queries}
 }
 
-func (e *Engine) StartTask(name string, rate int64, note string) error {
+func (e *Engine) StartTask(name string, rate int64, note string, tags []string) error {
 
 	_, err := e.queries.GetActiveEntry(context.Background())
 	if err == nil {
@@ -43,9 +43,20 @@ func (e *Engine) StartTask(name string, rate int64, note string) error {
 		StartTime:  time.Now(),
 	}
 
-	_, err = e.queries.CreateEntry(context.Background(), args)
+	entry, err := e.queries.CreateEntry(context.Background(), args)
 	if err != nil {
 		return err
+	}
+
+	for _, tag := range tags {
+		newTag, err := e.queries.CreateTag(context.Background(), tag)
+		if err != nil {
+			return fmt.Errorf("cannot create tag '%s': %w", tag, err)
+		}
+		err = e.queries.LinkTagToEntry(context.Background(), db.LinkTagToEntryParams{TagID: newTag.ID, EntryID: entry.ID})
+		if err != nil {
+			return fmt.Errorf("cannot add tag '%s' to entry: %w", tag, err)
+		}
 	}
 	return nil
 }
