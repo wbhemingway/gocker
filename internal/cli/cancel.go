@@ -12,7 +12,7 @@ var cancelCmd = &cobra.Command{
 	Short: "Cancel current tracking session",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := tracker
+		err := tracker.CancelTask()
 		if err != nil {
 			log.Fatalf("Error: %v", err)
 		}

@@ -4,6 +4,14 @@ VALUES (?)
 ON CONFLICT(name) DO UPDATE SET name=excluded.name
 RETURNING *;
 
+-- name: DeleteTag :exec
+DELETE FROM tags
+WHERE name = ?;
+
+-- name: DeleteTagID :exec
+DELETE FROM tags
+WHERE id = ?;
+
 -- name: LinkTagToEntry :exec
 INSERT INTO entry_tags (entry_id, tag_id)
 VALUES (?, ?);
