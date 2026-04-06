@@ -14,6 +14,7 @@ import (
 
 type Engine struct {
 	queries *db.Queries
+	db      *sql.DB
 }
 
 type Break struct {
@@ -21,8 +22,8 @@ type Break struct {
 	End   *time.Time `json:"end,omitempty"`
 }
 
-func NewEngine(queries *db.Queries) *Engine {
-	return &Engine{queries: queries}
+func NewEngine(queries *db.Queries, db *sql.DB) *Engine {
+	return &Engine{queries: queries, db: db}
 }
 
 func (e *Engine) StartTask(name string, rate int64, note string, tags []string) error {
@@ -35,30 +36,36 @@ func (e *Engine) StartTask(name string, rate int64, note string, tags []string) 
 	if err != sql.ErrNoRows {
 		return fmt.Errorf("database error checking active tasks: %w", err)
 	}
+	tx, err := e.db.BeginTx(context.Background(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
 
+	qtx := e.queries.WithTx(tx)
 	args := db.CreateEntryParams{
 		TaskName:   name,
 		HourlyRate: rate,
 		Note:       note,
-		StartTime:  time.Now(),
+		StartTime:  time.Now().UTC(),
 	}
 
-	entry, err := e.queries.CreateEntry(context.Background(), args)
+	entry, err := qtx.CreateEntry(context.Background(), args)
 	if err != nil {
 		return err
 	}
 
 	for _, tag := range tags {
-		newTag, err := e.queries.CreateTag(context.Background(), tag)
+		newTag, err := qtx.CreateTag(context.Background(), tag)
 		if err != nil {
 			return fmt.Errorf("cannot create tag '%s': %w", tag, err)
 		}
-		err = e.queries.LinkTagToEntry(context.Background(), db.LinkTagToEntryParams{TagID: newTag.ID, EntryID: entry.ID})
+		err = qtx.LinkTagToEntry(context.Background(), db.LinkTagToEntryParams{TagID: newTag.ID, EntryID: entry.ID})
 		if err != nil {
 			return fmt.Errorf("cannot add tag '%s' to entry: %w", tag, err)
 		}
 	}
-	return nil
+	return tx.Commit()
 }
 
 func (e *Engine) StopTask() error {
@@ -72,7 +79,7 @@ func (e *Engine) StopTask() error {
 
 	args := db.EndEntryParams{
 		EndTime: sql.NullTime{
-			Time:  time.Now(),
+			Time:  time.Now().UTC(),
 			Valid: true,
 		},
 		ID: curTask.ID,
@@ -117,9 +124,9 @@ func (e *Engine) ToggleBreak() error {
 	}
 
 	if len(breaks) == 0 || breaks[len(breaks)-1].End != nil {
-		breaks = append(breaks, Break{Start: time.Now()})
+		breaks = append(breaks, Break{Start: time.Now().UTC()})
 	} else {
-		now := time.Now()
+		now := time.Now().UTC()
 		breaks[len(breaks)-1].End = &now
 	}
 
