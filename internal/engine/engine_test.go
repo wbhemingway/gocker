@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/wbhemingway/gocker/internal/db"
 	"github.com/wbhemingway/gocker/internal/models"
@@ -15,7 +14,7 @@ import (
 )
 
 func setupTestDB(t *testing.T) (*Engine, *sql.DB) {
-	testDB, err := sql.Open("sqlite", ":memory:")
+	testDB, err := sql.Open("sqlite", ":memory:?_pragma=foreign_keys(1)")
 	if err != nil {
 		t.Fatalf("failed to open database: %v", err)
 	}
@@ -99,6 +98,26 @@ func TestEngine_StartTask(t *testing.T) {
 				}
 				if active.Note != tc.note {
 					t.Errorf("Expected note %q, got %q", tc.note, active.Note)
+				}
+
+				if tc.tags != nil {
+					dbTags, err := eng.queries.GetTagsForEntry(context.Background(), active.ID)
+					if err != nil {
+						t.Fatalf("Failed to get tags: %v", err)
+					}
+					if len(dbTags) != len(tc.tags) {
+						t.Errorf("Expected %d tags, got %d", len(tc.tags), len(dbTags))
+					} else {
+						tagMap := make(map[string]bool)
+						for _, t := range dbTags {
+							tagMap[t.Name] = true
+						}
+						for _, tag := range tc.tags {
+							if !tagMap[tag] {
+								t.Errorf("Expected tag %q to be present", tag)
+							}
+						}
+					}
 				}
 			}
 		})
@@ -288,7 +307,6 @@ func TestEngine_GetStatus(t *testing.T) {
 			setup: func(eng *Engine) {
 				_ = eng.StartTask("BreakTask", 5000, "", nil)
 				_ = eng.ToggleBreak()
-				time.Sleep(10 * time.Millisecond)
 			},
 			expectError: false,
 			verify: func(t *testing.T, status *models.TaskStatus) {
