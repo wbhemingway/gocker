@@ -19,12 +19,12 @@ INSERT INTO entries (
     status,
     flat_fee
 ) VALUES (
-    sqlc.arg(task_name),
-    sqlc.arg(logged_time),
-    sqlc.arg(logged_time),
-    sqlc.arg(note),
+    @task_name,
+    @logged_time,
+    @logged_time,
+    @note,
     'completed',
-    sqlc.arg(flat_fee)
+    @flat_fee
 )
 RETURNING *;
 
