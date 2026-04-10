@@ -17,6 +17,8 @@ type TimeTracker interface {
 	CancelTask() error
 	ToggleBreak() error
 	GetStatus() (*models.TaskStatus, error)
+	UpdateStatus(entryID int64, status models.EntryStatus) error
+	CreateFlatTask(name string, flat int64, note string, tags []string) error
 }
 
 var tracker TimeTracker

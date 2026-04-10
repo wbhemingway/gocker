@@ -32,7 +32,7 @@ status
 ) VALUES (
  ?, ?, ?, ?, 'active'
  )
-RETURNING id, task_name, hourly_rate, start_time, end_time, status, breaks_json, note
+RETURNING id, task_name, hourly_rate, start_time, end_time, flat_fee, status, breaks_json, note
 `
 
 type CreateEntryParams struct {
@@ -56,6 +56,55 @@ func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry
 		&i.HourlyRate,
 		&i.StartTime,
 		&i.EndTime,
+		&i.FlatFee,
+		&i.Status,
+		&i.BreaksJson,
+		&i.Note,
+	)
+	return i, err
+}
+
+const createFlatEntry = `-- name: CreateFlatEntry :one
+INSERT INTO entries (
+    task_name,
+    start_time,
+    end_time,
+    note,
+    status,
+    flat_fee
+) VALUES (
+    ?1,
+    ?2,
+    ?2,
+    ?3,
+    'completed',
+    ?4
+)
+RETURNING id, task_name, hourly_rate, start_time, end_time, flat_fee, status, breaks_json, note
+`
+
+type CreateFlatEntryParams struct {
+	TaskName   string    `json:"task_name"`
+	LoggedTime time.Time `json:"logged_time"`
+	Note       string    `json:"note"`
+	FlatFee    int64     `json:"flat_fee"`
+}
+
+func (q *Queries) CreateFlatEntry(ctx context.Context, arg CreateFlatEntryParams) (Entry, error) {
+	row := q.db.QueryRowContext(ctx, createFlatEntry,
+		arg.TaskName,
+		arg.LoggedTime,
+		arg.Note,
+		arg.FlatFee,
+	)
+	var i Entry
+	err := row.Scan(
+		&i.ID,
+		&i.TaskName,
+		&i.HourlyRate,
+		&i.StartTime,
+		&i.EndTime,
+		&i.FlatFee,
 		&i.Status,
 		&i.BreaksJson,
 		&i.Note,
@@ -69,7 +118,7 @@ SET
     end_time = ?,
     status = 'completed'
 WHERE id = ?
-RETURNING id, task_name, hourly_rate, start_time, end_time, status, breaks_json, note
+RETURNING id, task_name, hourly_rate, start_time, end_time, flat_fee, status, breaks_json, note
 `
 
 type EndEntryParams struct {
@@ -86,6 +135,7 @@ func (q *Queries) EndEntry(ctx context.Context, arg EndEntryParams) (Entry, erro
 		&i.HourlyRate,
 		&i.StartTime,
 		&i.EndTime,
+		&i.FlatFee,
 		&i.Status,
 		&i.BreaksJson,
 		&i.Note,
@@ -94,7 +144,7 @@ func (q *Queries) EndEntry(ctx context.Context, arg EndEntryParams) (Entry, erro
 }
 
 const getActiveEntry = `-- name: GetActiveEntry :one
-SELECT id, task_name, hourly_rate, start_time, end_time, status, breaks_json, note FROM entries
+SELECT id, task_name, hourly_rate, start_time, end_time, flat_fee, status, breaks_json, note FROM entries
 WHERE status = 'active'
 LIMIT 1
 `
@@ -108,6 +158,7 @@ func (q *Queries) GetActiveEntry(ctx context.Context) (Entry, error) {
 		&i.HourlyRate,
 		&i.StartTime,
 		&i.EndTime,
+		&i.FlatFee,
 		&i.Status,
 		&i.BreaksJson,
 		&i.Note,
@@ -116,7 +167,7 @@ func (q *Queries) GetActiveEntry(ctx context.Context) (Entry, error) {
 }
 
 const listRecentEntries = `-- name: ListRecentEntries :many
-SELECT id, task_name, hourly_rate, start_time, end_time, status, breaks_json, note FROM entries
+SELECT id, task_name, hourly_rate, start_time, end_time, flat_fee, status, breaks_json, note FROM entries
 ORDER BY start_time DESC
 LIMIT ?
 `
@@ -136,6 +187,7 @@ func (q *Queries) ListRecentEntries(ctx context.Context, limit int64) ([]Entry, 
 			&i.HourlyRate,
 			&i.StartTime,
 			&i.EndTime,
+			&i.FlatFee,
 			&i.Status,
 			&i.BreaksJson,
 			&i.Note,
@@ -166,5 +218,21 @@ type UpdateEntryBreaksParams struct {
 
 func (q *Queries) UpdateEntryBreaks(ctx context.Context, arg UpdateEntryBreaksParams) error {
 	_, err := q.db.ExecContext(ctx, updateEntryBreaks, arg.BreaksJson, arg.ID)
+	return err
+}
+
+const updateEntryStatus = `-- name: UpdateEntryStatus :exec
+UPDATE entries
+SET status = ?
+WHERE id = ?
+`
+
+type UpdateEntryStatusParams struct {
+	Status string `json:"status"`
+	ID     int64  `json:"id"`
+}
+
+func (q *Queries) UpdateEntryStatus(ctx context.Context, arg UpdateEntryStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateEntryStatus, arg.Status, arg.ID)
 	return err
 }

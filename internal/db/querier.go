@@ -11,7 +11,10 @@ import (
 type Querier interface {
 	CancelEntry(ctx context.Context, id int64) error
 	CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error)
+	CreateFlatEntry(ctx context.Context, arg CreateFlatEntryParams) (Entry, error)
 	CreateTag(ctx context.Context, name string) (Tag, error)
+	DeleteTag(ctx context.Context, name string) error
+	DeleteTagID(ctx context.Context, id int64) error
 	EndEntry(ctx context.Context, arg EndEntryParams) (Entry, error)
 	GetActiveEntry(ctx context.Context) (Entry, error)
 	GetTagsForEntry(ctx context.Context, entryID int64) ([]Tag, error)
@@ -20,6 +23,7 @@ type Querier interface {
 	ListRecentEntries(ctx context.Context, limit int64) ([]Entry, error)
 	UnlinkTagFromEntry(ctx context.Context, arg UnlinkTagFromEntryParams) error
 	UpdateEntryBreaks(ctx context.Context, arg UpdateEntryBreaksParams) error
+	UpdateEntryStatus(ctx context.Context, arg UpdateEntryStatusParams) error
 }
 
 var _ Querier = (*Queries)(nil)

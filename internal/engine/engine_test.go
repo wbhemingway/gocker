@@ -101,26 +101,86 @@ func TestEngine_StartTask(t *testing.T) {
 				}
 
 				if tc.tags != nil {
-					dbTags, err := eng.queries.GetTagsForEntry(context.Background(), active.ID)
-					if err != nil {
-						t.Fatalf("Failed to get tags: %v", err)
-					}
-					if len(dbTags) != len(tc.tags) {
-						t.Errorf("Expected %d tags, got %d", len(tc.tags), len(dbTags))
-					} else {
-						tagMap := make(map[string]bool)
-						for _, t := range dbTags {
-							tagMap[t.Name] = true
-						}
-						for _, tag := range tc.tags {
-							if !tagMap[tag] {
-								t.Errorf("Expected tag %q to be present", tag)
-							}
-						}
-					}
+					verifyTags(t, eng, active.ID, tc.tags)
 				}
 			}
 		})
+	}
+}
+
+func TestEngine_CreateFlatTask(t *testing.T) {
+	tests := []struct {
+		name        string
+		taskName    string
+		fee         int64
+		note        string
+		tags        []string
+		expectError bool
+	}{
+		{
+			name:        "Create flat task",
+			taskName:    "Flat task",
+			fee:         5000,
+			note:        "flat note",
+			tags:        []string{"flat1"},
+			expectError: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			eng, dbObj := setupTestDB(t)
+			defer dbObj.Close()
+
+			err := eng.CreateFlatTask(tc.taskName, tc.fee, tc.note, tc.tags)
+			if (err != nil) != tc.expectError {
+				t.Errorf("Expected err: %v, got: %v", tc.expectError, err)
+			}
+
+			if !tc.expectError {
+				entries, err := eng.queries.ListRecentEntries(context.Background(), 1)
+				if err != nil {
+					t.Fatalf("Failed to list entries: %v", err)
+				}
+				if len(entries) == 0 {
+					t.Fatal("Expected an entry to be created")
+				}
+				entry := entries[0]
+				if entry.TaskName != tc.taskName {
+					t.Errorf("Expected task name %q, got %q", tc.taskName, entry.TaskName)
+				}
+				if entry.FlatFee != tc.fee {
+					t.Errorf("Expected fee %d, got %d", tc.fee, entry.FlatFee)
+				}
+				if entry.Status != "completed" {
+					t.Errorf("Expected status 'completed', got %q", entry.Status)
+				}
+
+				if tc.tags != nil {
+					verifyTags(t, eng, entry.ID, tc.tags)
+				}
+			}
+		})
+	}
+}
+
+func verifyTags(t *testing.T, eng *Engine, entryID int64, expectedTags []string) {
+	dbTags, err := eng.queries.GetTagsForEntry(context.Background(), entryID)
+	if err != nil {
+		t.Fatalf("Failed to get tags: %v", err)
+	}
+	if len(dbTags) != len(expectedTags) {
+		t.Errorf("Expected %d tags, got %d", len(expectedTags), len(dbTags))
+		return
+	}
+	tagMap := make(map[string]bool)
+	for _, t := range dbTags {
+		tagMap[t.Name] = true
+	}
+	for _, tag := range expectedTags {
+		if !tagMap[tag] {
+			t.Errorf("Expected tag %q to be present", tag)
+		}
 	}
 }
 

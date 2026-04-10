@@ -10,6 +10,24 @@ status
  )
 RETURNING *;
 
+-- name: CreateFlatEntry :one
+INSERT INTO entries (
+    task_name,
+    start_time,
+    end_time,
+    note,
+    status,
+    flat_fee
+) VALUES (
+    sqlc.arg(task_name),
+    sqlc.arg(logged_time),
+    sqlc.arg(logged_time),
+    sqlc.arg(note),
+    'completed',
+    sqlc.arg(flat_fee)
+)
+RETURNING *;
+
 -- name: GetActiveEntry :one
 SELECT * FROM entries
 WHERE status = 'active'
@@ -37,4 +55,9 @@ LIMIT ?;
 -- name: UpdateEntryBreaks :exec
 UPDATE entries
 SET breaks_json = ?
+WHERE id = ?;
+
+-- name: UpdateEntryStatus :exec
+UPDATE entries
+SET status = ?
 WHERE id = ?;

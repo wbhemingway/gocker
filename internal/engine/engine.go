@@ -68,6 +68,39 @@ func (e *Engine) StartTask(name string, rate int64, note string, tags []string) 
 	return tx.Commit()
 }
 
+func (e *Engine) CreateFlatTask(name string, fee int64, note string, tags []string) error {
+	tx, err := e.db.BeginTx(context.Background(), nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	qtx := e.queries.WithTx(tx)
+	args := db.CreateFlatEntryParams{
+		TaskName:   name,
+		FlatFee:    fee,
+		Note:       note,
+		LoggedTime: time.Now().UTC(),
+	}
+
+	entry, err := qtx.CreateFlatEntry(context.Background(), args)
+	if err != nil {
+		return err
+	}
+
+	for _, tag := range tags {
+		newTag, err := qtx.CreateTag(context.Background(), tag)
+		if err != nil {
+			return fmt.Errorf("cannot create tag '%s': %w", tag, err)
+		}
+		err = qtx.LinkTagToEntry(context.Background(), db.LinkTagToEntryParams{TagID: newTag.ID, EntryID: entry.ID})
+		if err != nil {
+			return fmt.Errorf("cannot add tag '%s' to entry: %w", tag, err)
+		}
+	}
+	return tx.Commit()
+}
+
 func (e *Engine) StopTask() error {
 	curTask, err := e.queries.GetActiveEntry(context.Background())
 	if err != nil {
@@ -183,4 +216,18 @@ func (e *Engine) GetStatus() (*models.TaskStatus, error) {
 		TotalDuration: totalDuration,
 		PaidDuration:  paidDuration,
 	}, nil
+}
+
+func (e *Engine) UpdateStatus(id int64, newStatus models.EntryStatus) error {
+	args := db.UpdateEntryStatusParams{
+		Status: string(newStatus),
+		ID:     id,
+	}
+
+	err := e.queries.UpdateEntryStatus(context.Background(), args)
+	if err != nil {
+		return fmt.Errorf("failed to update status: %w", err)
+	}
+
+	return nil
 }

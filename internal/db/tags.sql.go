@@ -23,6 +23,26 @@ func (q *Queries) CreateTag(ctx context.Context, name string) (Tag, error) {
 	return i, err
 }
 
+const deleteTag = `-- name: DeleteTag :exec
+DELETE FROM tags
+WHERE name = ?
+`
+
+func (q *Queries) DeleteTag(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, deleteTag, name)
+	return err
+}
+
+const deleteTagID = `-- name: DeleteTagID :exec
+DELETE FROM tags
+WHERE id = ?
+`
+
+func (q *Queries) DeleteTagID(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteTagID, id)
+	return err
+}
+
 const getTagsForEntry = `-- name: GetTagsForEntry :many
 SELECT t.id, t.name FROM tags t
 JOIN entry_tags et ON t.id = et.tag_id

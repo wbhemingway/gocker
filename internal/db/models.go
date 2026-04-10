@@ -15,6 +15,7 @@ type Entry struct {
 	HourlyRate int64        `json:"hourly_rate"`
 	StartTime  time.Time    `json:"start_time"`
 	EndTime    sql.NullTime `json:"end_time"`
+	FlatFee    int64        `json:"flat_fee"`
 	Status     string       `json:"status"`
 	BreaksJson string       `json:"breaks_json"`
 	Note       string       `json:"note"`
